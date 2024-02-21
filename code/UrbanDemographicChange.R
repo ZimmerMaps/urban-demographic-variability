@@ -41,9 +41,12 @@ column_range <- 3:15
 ChangeVariables <- interim_change %>%
   group_by(zone) %>%
   reframe(across(column_range, ~ . - lag(.), .names = "{.col}_Delta")) %>%
-  ungroup() %>%
-  filter(complete.cases(.))
+  ungroup() 
 
+column_range <- 3:14
+
+ChangeVariables = ChangeVariables %>%
+  filter(if_any(column_range, ~ !is.na(.)))
 
 # calculate migration variables ####
 
@@ -70,9 +73,6 @@ ChangeVariables$PercChangeFromMigration = ChangeVariables$TotalMigration / Chang
 
 # prepare for export ####
 ChangeVariables = merge(ChangeVariables, city_details, by = "zone")
-
-# keep only complete cases
-ChangeVariables <- ChangeVariables[complete.cases(ChangeVariables), ]
 
 # save
 write.csv(ChangeVariables, 'data/worldpop_ucdb_change.csv', row.names = FALSE)
