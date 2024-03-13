@@ -92,7 +92,6 @@ colnames(ucdb_seasia_selected) <- c("urbanid",
 ucdb_seasia_selected$mean_temp_change = ucdb_seasia_selected$mean_temp2015 - ucdb_seasia_selected$mean_temp1990
 ucdb_seasia_selected$mean_precip_change = ucdb_seasia_selected$mean_precip2015 - ucdb_seasia_selected$mean_precip1990
 
-
 # built up area
 ucdb_seasia_selected$built_perc1990 = ucdb_seasia_selected$built1990 / ucdb_seasia_selected$area * 100
 ucdb_seasia_selected$built_perc2015 = ucdb_seasia_selected$built2015 / ucdb_seasia_selected$area * 100
@@ -124,6 +123,9 @@ seasia_variables = merge(ucdb_seasia_selected, worldpop_change2015, by.x = "urba
 ggplot(seasia_variables, aes(x = TotalDRChange)) +
   geom_density() +
   theme_bw()
+
+### Filter out cities with less than 300k 
+ModelCities <- subset(seasia_variables, TotalPop_2015 < 300000)
 
 # set up regression model
 lm1 = lm(TotalPopChange ~ 
@@ -158,7 +160,7 @@ lm1 = lm(TotalPopChange ~
            TotalDR_2015 +
            
            country_iso, 
-         data = seasia_variables)
+         data = ModelCities)
 
 summary(lm1)
 predictions <- predict(lm1, newdata = seasia_variables)
@@ -211,7 +213,7 @@ lm2 = lm(TotalDRChange ~
            TotalDR_2000 +
            
            country_iso, 
-         data = seasia_variables)
+         data = ModelCities)
 
 summary(lm2)
 
