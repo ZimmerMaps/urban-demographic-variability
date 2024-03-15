@@ -115,20 +115,41 @@ ucdb_seasia_selected$flood_exp_perc2015 = ucdb_seasia_selected$flood_exp2015 / u
 
 ucdb_seasia_selected$flood_exp_change = ucdb_seasia_selected$flood_exp_perc2015 - ucdb_seasia_selected$flood_exp_perc1990
 
-
 # merge in change data
 seasia_variables = merge(ucdb_seasia_selected, worldpop_change2015, by.x = "urbanid", by.y = "zone")
+
+#calculate total pop change as a percentage
+seasia_variables$PopChangePercentage = (seasia_variables$TotalPop2015 - seasia_variables$TotalPop_2000) / seasia_variables$TotalPop_2000 * 100
 
 #ggplot to show distribution of variables
 ggplot(seasia_variables, aes(x = TotalDRChange)) +
   geom_density() +
+  facet_wrap(~country_name) +
   theme_bw()
 
+ggplot(seasia_variables, aes(x = PopChangePercentage)) +
+  geom_density() +
+  theme_bw()
+
+HCM = seasia_variables %>%
+  filter(city_name == "Ho Chi Minh City")
+
 ### Filter out cities with less than 300k 
-ModelCities <- subset(seasia_variables, TotalPop_2015 < 300000)
+ModelCities <- subset(seasia_variables, TotalPop_2015 < 300000 & TotalPop_2000 > 100000)
+
+ggplot(ModelCities, aes(x = TotalDRChange)) +
+  geom_density() +
+  facet_wrap(~country_name) +
+  theme_bw()
+
+ggplot(ModelCities, aes(x = PopChangePercentage)) +
+  geom_density() +
+  facet_wrap(~country_name) +
+  theme_bw()
+
 
 # set up regression model
-lm1 = lm(TotalPopChange ~ 
+lm1 = lm(PopChangePercentage ~ 
            
            elevation +
            
@@ -151,7 +172,7 @@ lm1 = lm(TotalPopChange ~
            mean_green2015 +
            mean_green_change + 
            
-           flood_exp2015 +
+           flood_exp_perc2015 +
            flood_exp_change + 
            
            heatwave +
@@ -163,22 +184,21 @@ lm1 = lm(TotalPopChange ~
          data = ModelCities)
 
 summary(lm1)
-predictions <- predict(lm1, newdata = seasia_variables)
+predictions <- predict(lm1, newdata = ModelCities)
 
 plot_data <- data.frame(
-  Actual = seasia_variables$TotalPopChange,
-  Predicted = predictions
+  Actual = ModelCities$TotalPopChange,
+  Predicted = predictions,
+  country = ModelCities$country_iso
 )
 
-ggplot(plot_data, aes(x = Actual, y = Predicted)) +
+ggplot(plot_data, aes(x = Actual, y = Predicted, color = country)) +
   geom_point() +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
   labs(title = "Actual vs. Predicted",
        x = "Actual Values",
        y = "Predicted Values") +
-  scale_x_log10() +
-  scale_y_log10()
-
+  theme_bw() 
 
 
 
@@ -204,7 +224,7 @@ lm2 = lm(TotalDRChange ~
            mean_green2015 +
            mean_green_change + 
            
-           flood_exp2015 +
+           flood_exp_perc2015 +
            flood_exp_change + 
            
            heatwave +
@@ -217,16 +237,18 @@ lm2 = lm(TotalDRChange ~
 
 summary(lm2)
 
-predictions <- predict(lm2, newdata = seasia_variables)
+predictions <- predict(lm2, newdata = ModelCities)
 
 plot_data <- data.frame(
-  Actual = seasia_variables$TotalDRChange,
-  Predicted = predictions
+  Actual = ModelCities$TotalDRChange,
+  Predicted = predictions,
+  Country = ModelCities$country_name
 )
 
-ggplot(plot_data, aes(x = Actual, y = Predicted)) +
+ggplot(plot_data, aes(x = Actual, y = Predicted, color = Country)) +
   geom_point() +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  theme_bw() +
   labs(title = "Actual vs. Predicted",
        x = "Actual Values",
        y = "Predicted Values") 

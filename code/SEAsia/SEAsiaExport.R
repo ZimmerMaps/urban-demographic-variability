@@ -33,6 +33,16 @@ SEAsia_ghs_ucdb = ghs_ucdb %>%
   filter(CTR_MN_ISO %in% CountryList) %>%
   select(-X_sum)
 
+# add a city-size variable to stats and change
+CitySize_thresholds <- c(0, 50000, 100000, 300000, 500000, 1000000, 5000000, 10000000, Inf)
+CitySize_labels <- c("<50k", "50-100k", "100-300k", "300-500k", "500k-1m", "1m-5m", "5m-10m", ">10m")
+
+SEAsia_wp_stats$CitySize <- cut(SEAsia_wp_stats$TotalPop, breaks = CitySize_thresholds, labels = CitySize_labels, include.lowest = TRUE)
+SEAsia_wp_stats$CitySize <- factor(SEAsia_wp_stats$CitySize, levels = CitySize_labels)
+
+SEAsia_wp_change$CitySize <- cut(SEAsia_wp_change$TotalPop, breaks = CitySize_thresholds, labels = CitySize_labels, include.lowest = TRUE)
+SEAsia_wp_change$CitySize <- factor(SEAsia_wp_change$CitySize, levels = CitySize_labels)
+
 # export ####
 write.csv(SEAsia_wp_stats, 'data/SEAsia/SEAsia_WP_Stats.csv', row.names = FALSE)
 write.csv(SEAsia_wp_change, 'data/SEAsia/SEAsia_WP_Change.csv', row.names = FALSE)
