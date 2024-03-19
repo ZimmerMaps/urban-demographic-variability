@@ -121,21 +121,16 @@ seasia_variables = merge(ucdb_seasia_selected, worldpop_change2015, by.x = "urba
 #calculate total pop change as a percentage
 seasia_variables$PopChangePercentage = (seasia_variables$TotalPop2015 - seasia_variables$TotalPop_2000) / seasia_variables$TotalPop_2000 * 100
 
-#ggplot to show distribution of variables
-ggplot(seasia_variables, aes(x = TotalDRChange)) +
-  geom_density() +
-  facet_wrap(~country_name) +
-  theme_bw()
+seasia_variables$PopDensity_2015 = seasia_variables$TotalPop_2015 / seasia_variables$area
+seasia_variables$PopDensity_2000 = seasia_variables$TotalPop_2000 / seasia_variables$area
 
-ggplot(seasia_variables, aes(x = PopChangePercentage)) +
-  geom_density() +
-  theme_bw()
-
-HCM = seasia_variables %>%
-  filter(city_name == "Ho Chi Minh City")
+seasia_variables$PopDensityChange = (seasia_variables$PopDensity_2015 - seasia_variables$PopDensity_2000)
 
 ### Filter out cities with less than 300k 
-ModelCities <- subset(seasia_variables, TotalPop_2015 < 300000 & TotalPop_2000 > 100000)
+ModelCities <- subset(seasia_variables, TotalPop_2015 < 300000 & TotalPop_2000 > 5000)
+ModelCitiesThailand <- subset(seasia_variables, country_name == 'Thailand')
+ModelCitiesVietnam <- subset(seasia_variables, country_name == 'Vietnam')
+ModelCitiesIndonesia <- subset(seasia_variables, country_name == 'Indonesia')
 
 ggplot(ModelCities, aes(x = TotalDRChange)) +
   geom_density() +
@@ -147,6 +142,10 @@ ggplot(ModelCities, aes(x = PopChangePercentage)) +
   facet_wrap(~country_name) +
   theme_bw()
 
+ggplot(ModelCities, aes(x = PopDensityChange)) +
+  geom_density() +
+  facet_wrap(~country_name) +
+  theme_bw()
 
 # set up regression model
 lm1 = lm(PopChangePercentage ~ 
@@ -178,9 +177,7 @@ lm1 = lm(PopChangePercentage ~
            heatwave +
            
            TotalPop_2000 +
-           TotalDR_2015 +
-           
-           country_iso, 
+           TotalDR_2015,
          data = ModelCities)
 
 summary(lm1)
@@ -230,10 +227,9 @@ lm2 = lm(TotalDRChange ~
            heatwave +
            
            TotalPop_2015 +
-           TotalDR_2000 +
-           
-           country_iso, 
-         data = ModelCities)
+           TotalDR_2000,
+         
+         data = ModelCitiesIndonesia)
 
 summary(lm2)
 
@@ -252,6 +248,58 @@ ggplot(plot_data, aes(x = Actual, y = Predicted, color = Country)) +
   labs(title = "Actual vs. Predicted",
        x = "Actual Values",
        y = "Predicted Values") 
+
+
+lm3 = lm(PopDensityChange ~ 
+           elevation +
+           
+           mean_temp2015 +
+           mean_temp_change +
+           
+           mean_precip2015 +
+           mean_precip_change +
+           
+           built2015 +
+           built_change +
+           
+           ntl +
+           
+           gdp_percap2015 +
+           gdp_percap_change +
+           
+           tt_capital +
+           
+           mean_green2015 +
+           mean_green_change + 
+           
+           flood_exp_perc2015 +
+           flood_exp_change + 
+           
+           heatwave +
+           
+           TotalPop_2015 +
+           TotalDR_2000,
+         
+         data = ModelCitiesIndonesia)
+
+summary(lm3)
+
+predictions <- predict(lm3, newdata = ModelCities)
+
+plot_data <- data.frame(
+  Actual = ModelCities$TotalDRChange,
+  Predicted = predictions,
+  Country = ModelCities$country_name
+)
+
+ggplot(plot_data, aes(x = Actual, y = Predicted, color = Country)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  theme_bw() +
+  labs(title = "Actual vs. Predicted",
+       x = "Actual Values",
+       y = "Predicted Values") 
+
 
 
 
