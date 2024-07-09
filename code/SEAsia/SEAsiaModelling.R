@@ -48,7 +48,7 @@ ucdb_seasia_selected =
                 E_WR_P_90, #mean precip 1990
                 E_WR_P_14, #mean precip 2015
                 B90, #total built up 1990
-                B15, #total built up 2015
+                BGDP15_SM15, #total built up 2015
                 NTL_AV, #Night time lights
                 GDP90_SM, #sum gdp ppp 1990
                 GDP15_SM, #sum gdp ppp 2015

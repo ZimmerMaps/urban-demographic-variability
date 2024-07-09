@@ -30,22 +30,23 @@ interim_change = dplyr::select(worldpop_stats,
                                WomenCBA, WomanChildR,
                                YoungSR, WorkingSR, OldSR, TotalSR, GeneralFR)
 
-# keep only 2000 and 2020 to calculate the change
-interim_change = interim_change %>%
+
+# Calculate change between 2000 and 2020
+interim_change20 = interim_change %>%
   filter(year %in% c(2000,2020))
 
 # Define the range of columns to calculate differences (3 to 16)
 column_range <- 3:15
 
 # Group by two columns and calculate differences for columns in the specified range
-ChangeVariables <- interim_change %>%
+ChangeVariables20 <- interim_change20 %>%
   group_by(zone) %>%
   reframe(across(column_range, ~ . - lag(.), .names = "{.col}_Delta")) %>%
   ungroup() 
 
 column_range <- 3:14
 
-ChangeVariables = ChangeVariables %>%
+ChangeVariables20 = ChangeVariables20 %>%
   filter(if_any(column_range, ~ !is.na(.)))
 
 # calculate migration variables ####
@@ -58,21 +59,68 @@ SumVariables = worldpop_stats %>%
 
 #merge in to change dataset
 
-ChangeVariables = merge(ChangeVariables, SumVariables, by = "zone")
+ChangeVariables20 = merge(ChangeVariables20, SumVariables, by = "zone")
 
-ChangeVariables$TotalMigration = ChangeVariables$TotalPop_Delta - ChangeVariables$NaturalChange
+ChangeVariables20$TotalMigration = ChangeVariables20$TotalPop_Delta - ChangeVariables20$NaturalChange
 
 # add total pop in 2020 to calculate proportion of growth from migration
 TotalPop2020 = worldpop_stats %>%
   filter(year == '2020') %>%
   select(zone, TotalPop)
 
-ChangeVariables = merge(ChangeVariables, TotalPop2020, by = "zone")
+ChangeVariables20 = merge(ChangeVariables20, TotalPop2020, by = "zone")
 
-ChangeVariables$PercChangeFromMigration = ChangeVariables$TotalMigration / ChangeVariables$TotalPop_Delta * 100
+ChangeVariables20$PercChangeFromMigration = ChangeVariables20$TotalMigration / ChangeVariables20$TotalPop_Delta * 100
 
 # prepare for export ####
-ChangeVariables = merge(ChangeVariables, city_details, by = "zone")
+ChangeVariables20 = merge(ChangeVariables20, city_details, by = "zone")
+
+
+# Calculate change between 2000 and 2015
+interim_change15 = interim_change %>%
+  filter(year %in% c(2000,2015))
+
+# Define the range of columns to calculate differences (3 to 16)
+column_range <- 3:15
+
+# Group by two columns and calculate differences for columns in the specified range
+ChangeVariables15 <- interim_change15 %>%
+  group_by(zone) %>%
+  reframe(across(column_range, ~ . - lag(.), .names = "{.col}_Delta")) %>%
+  ungroup() 
+
+column_range <- 3:14
+
+ChangeVariables15 = ChangeVariables15 %>%
+  filter(if_any(column_range, ~ !is.na(.)))
+
+# calculate migration variables ####
+
+SumVariables = worldpop_stats %>%
+  group_by(zone) %>%
+  summarise(SumBirths = sum(AnnualBirths),
+            SumDeaths = sum(AnnualDeaths),
+            NaturalChange = (SumBirths -SumDeaths))
+
+#merge in to change dataset
+
+ChangeVariables15 = merge(ChangeVariables15, SumVariables, by = "zone")
+
+ChangeVariables15$TotalMigration = ChangeVariables15$TotalPop_Delta - ChangeVariables15$NaturalChange
+
+# add total pop in 2015 to calculate proportion of growth from migration
+TotalPop2015 = worldpop_stats %>%
+  filter(year == '2015') %>%
+  select(zone, TotalPop)
+
+ChangeVariables15 = merge(ChangeVariables15, TotalPop2015, by = "zone")
+
+ChangeVariables15$PercChangeFromMigration = ChangeVariables15$TotalMigration / ChangeVariables15$TotalPop_Delta * 100
+
+# prepare for export ####
+ChangeVariables15 = merge(ChangeVariables15, city_details, by = "zone")
+
 
 # save
-write.csv(ChangeVariables, 'data/worldpop_ucdb_change.csv', row.names = FALSE)
+write.csv(ChangeVariables20, 'data/worldpop_ucdb_change_20.csv', row.names = FALSE)
+write.csv(ChangeVariables15, 'data/worldpop_ucdb_change_15.csv', row.names = FALSE)
