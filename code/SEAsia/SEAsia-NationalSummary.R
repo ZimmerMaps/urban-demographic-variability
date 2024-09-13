@@ -14,4 +14,4 @@ dataSum = dataAsia %>%
   group_by(country_iso, age, sex, year) %>%
   summarise(TotalGroupPop = round(sum(sum)))
 
-write.csv(dataSum, "/Users/andrewzimmer/Documents/Montana State - Postdoc/Research/Zimmer - Urban Demographic Variability/GitHub - Code and Data/data/SEAsia/Vietnam-Summary-AgeSex.csv")
+write.csv(dataSum, "/Users/andrewzimmer/Documents/Montana State - Postdoc/Research/Zimmer - Urban Demographic Variability/GitHub - Code and Data/data/SEAsia/SEAsia-Summary-AgeSex.csv")
