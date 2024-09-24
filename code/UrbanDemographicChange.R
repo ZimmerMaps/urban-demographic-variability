@@ -16,6 +16,8 @@ setwd('/Users/andrewzimmer/Documents/Montana State - Postdoc/Research/Zimmer - U
 
 # load data ####
 worldpop_stats = read.csv('data/worldpop_ucdb_stats.csv')
+worldpop_stats15 = worldpop_stats %>%
+  filter(between(year, 2000, 2015))
 
 city_details = dplyr::select(worldpop_stats, zone, city_name, country_iso, country_name, continent_name, latitude, longitude)
 city_details = distinct(city_details) # keep only one set of observations per city
@@ -96,7 +98,7 @@ ChangeVariables15 = ChangeVariables15 %>%
 
 # calculate migration variables ####
 
-SumVariables = worldpop_stats %>%
+SumVariables = worldpop_stats15 %>%
   group_by(zone) %>%
   summarise(SumBirths = sum(AnnualBirths),
             SumDeaths = sum(AnnualDeaths),
